@@ -17,16 +17,22 @@ import { ApiDocGenericPatch } from 'src/app/common/api-doc-generic-patch.decorat
 import { ApiDocGenericDelete } from 'src/app/common/api-doc-generic-delete.decorator';
 import { ApiDocGenericGetOne } from 'src/app/common/api-doc-generic-get-one.decorator';
 import { ApiDocGenericGetAll } from 'src/app/common/api-doc-generic-get-all.decorator';
+import { PubSubService } from '../global/pubsub/pubsub.service';
 
 @ApiTags('users')
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly pubSubService: PubSubService,
+  ) {}
 
   @Post('create')
   @ApiDocGenericPost('user-create', CreateUserDto, UserDto)
   async create(@Body() body: CreateUserDto): Promise<UserDto> {
-    return await this.userService.create(body);
+    const userCreated = await this.userService.create(body);
+    this.pubSubService.publish('user-created', userCreated, 'user');
+    return userCreated;
   }
 
   @Patch(':userId')

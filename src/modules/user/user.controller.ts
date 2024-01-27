@@ -18,6 +18,7 @@ import { ApiDocGenericDelete } from 'src/app/common/api-doc-generic-delete.decor
 import { ApiDocGenericGetOne } from 'src/app/common/api-doc-generic-get-one.decorator';
 import { ApiDocGenericGetAll } from 'src/app/common/api-doc-generic-get-all.decorator';
 import { PubSubService } from '../global/pubsub/pubsub.service';
+import { MessagePattern } from '@nestjs/microservices';
 
 @ApiTags('users')
 @Controller('user')
@@ -29,7 +30,9 @@ export class UserController {
 
   @Post('create')
   @ApiDocGenericPost('user-create', CreateUserDto, UserDto)
-  async create(@Body() body: CreateUserDto): Promise<UserDto> {
+  @MessagePattern('notification')
+  async create(@Body() body: CreateUserDto, data): Promise<UserDto> {
+    console.warn('message', data);
     const userCreated = await this.userService.create(body);
     this.pubSubService.publish('user-created', userCreated, 'user');
     return userCreated;
